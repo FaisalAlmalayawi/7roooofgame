@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <title>السؤال</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      text-align: center;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .chosen-letter {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2c5282, #63b3ed);
+      color: white;
+      font-size: 50px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .chosen-letter:hover {
+      transform: scale(1.05);
+    }
+
+    .question-box {
+      font-size: 36px;
+      font-weight: bold;
+      color: #2d3436;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+
+    .timer-container {
+      width: 180px;
+      height: 180px;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .circle-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(#27ae60 360deg, transparent 0deg);
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .timer-text {
+      position: absolute;
+      width: 100%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      font-weight: bold;
+      color: #000000;
+    }
+
+    .time-up-message {
+      font-size: 24px;
+      color: #e74c3c;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .team-btn {
+      padding: 14px 24px;
+      font-size: 20px;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .team-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    h2 {
+      font-size: 28px;
+      color: #ffffff;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="chosen-letter" id="chosenLetter">؟</div>
+  <div class="question-box" id="questionBox">جاري التحميل...</div>
+  <div class="timer-container">
+    <div class="circle-fill" id="circleFill"></div>
+    <div class="timer-text" id="timerText">10</div>
+  </div>
+  <div class="time-up-message" id="timeUpMsg">انتهى الوقت!</div>
+  <h2>من الفريق الذي أجاب؟</h2>
+  <div class="button-container">
+    <button class="team-btn" id="team1Btn" onclick="setTeam('team1')"><i class="fas fa-circle"></i> الفريق الأول</button>
+    <button class="team-btn" id="team2Btn" onclick="setTeam('team2')"><i class="fas fa-circle"></i> الفريق الثاني</button>
+  </div>
+  <audio id="alertSound">
+    <source src="alert - Made with Clipchamp.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="startSound">
+    <source src="the-mechanical-wall-clock-ticks-one-minute-253101.mp3" type="audio/mpeg">
+  </audio>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const letter = urlParams.get("letter");
+    const question = decodeURIComponent(urlParams.get("question"));
+
+    document.getElementById("chosenLetter").textContent = letter;
+    document.getElementById("questionBox").textContent = "اضغط Enter لبدء السؤال";
+
+    const team1Name = localStorage.getItem("team1Name") || "الفريق الأول";
+    const team2Name = localStorage.getItem("team2Name") || "الفريق الثاني";
+    const team1Color = localStorage.getItem("team1Color") || "red";
+    const team2Color = localStorage.getItem("team2Color") || "blue";
+
+    function getHexColor(color) {
+      const colorMap = {
+        "red": "#CC2936",
+        "blue": "#0097e6",
+        "yellow": "#fbc531",
+        "green": "#4cd137",
+        "dark-gray": "#353b48",
+        "purple": "#8c7ae6",
+        "orange": "#e67e22",
+        "pink": "#FDA7DF"
+      };
+      return colorMap[color] || "#ccc";
+    }
+
+    const team1Btn = document.getElementById("team1Btn");
+    const team2Btn = document.getElementById("team2Btn");
+    team1Btn.textContent = team1Name;
+    team1Btn.style.backgroundColor = getHexColor(team1Color);
+    team2Btn.textContent = team2Name;
+    team2Btn.style.backgroundColor = getHexColor(team2Color);
+
+    let currentCharIndex = 0;
+    let intervalId = null;
+    let isRunning = false;
+    let timer;
+    let duration = 10;
+
+    const timerText = document.getElementById("timerText");
+    const circleFill = document.getElementById("circleFill");
+    const timeUpMsg = document.getElementById("timeUpMsg");
+    const alertSound = document.getElementById("alertSound");
+
+    function showNextChar() {
+      if (currentCharIndex < question.length) {
+        document.getElementById("questionBox").textContent = question.slice(0, ++currentCharIndex);
+      }
+      if (currentCharIndex === question.length) {
+        clearInterval(intervalId);
+        isRunning = false;
+      }
+    }
+
+    function startTyping() {
+      if (!isRunning && currentCharIndex < question.length) {
+        isRunning = true;
+        intervalId = setInterval(showNextChar, 90);
+      }
+    }
+
+    function startTimer() {
+  const startSound = document.getElementById("startSound");
+  startSound.play().catch(error => {
+    console.log("خطأ في تشغيل الصوت:", error);
+  });
+  
+  clearInterval(timer);
+  duration = 10;
+  timeUpMsg.style.display = "none";
+  timerText.textContent = duration;
+  circleFill.style.background = `conic-gradient(#27ae60 360deg, transparent 0deg)`;
+
+  timer = setInterval(() => {
+    duration--;
+    timerText.textContent = duration;
+    let angle = duration * 36;
+    circleFill.style.background = `conic-gradient(${duration >= 6 ? '#27ae60' : duration >= 3 ? '#f39c12' : '#e74c3c'} ${angle}deg, transparent 0deg)`;
+
+    if (duration <= 0) {
+      clearInterval(timer);
+      timeUpMsg.style.display = "block";
+      alertSound.play();
+      startSound.pause();
+      startSound.currentTime = 0;
+    }
+  }, 775);
+}
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (!isRunning) {
+          if (currentCharIndex === 0) document.getElementById("questionBox").textContent = "";
+          startTyping();
+        } else {
+          clearInterval(intervalId);
+          isRunning = false;
+        }
+      } else if (event.key === "Shift") {
+        event.preventDefault();
+        if (!isRunning) {
+          if (currentCharIndex === question.length) return;
+          if (currentCharIndex === 0) document.getElementById("questionBox").textContent = "";
+          startTyping();
+        } else {
+          clearInterval(intervalId);
+          isRunning = false;
+          document.getElementById("questionBox").textContent = question;
+          currentCharIndex = question.length;
+        }
+      } else if (event.key === " ") {
+        event.preventDefault();
+        startTimer();
+      }
+    });
+
+    function setTeam(team) {
+      const teamColor = team === "team1" ? team1Color : team2Color;
+      localStorage.setItem(`letter_${letter}`, teamColor);
+      localStorage.setItem("last_team", teamColor);
+      const originPage = urlParams.get("origin") || "begin.html";
+      window.location.href = originPage;
+    }
+  </script>
+</body>
+</html>

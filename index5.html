@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <title>حروف 5</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 48px;
+      color: #ffffff;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+      margin: 10px 0;
+    }
+    .top-left {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    #lastTeam {
+      font-size: 22px;
+      font-weight: bold;
+      padding: 12px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: inline-block;
+      width: 300px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      margin: 10px 0;
+    }
+    #hexGrid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 90%;
+      max-width: 924px;
+      position: relative;
+      margin: 80px auto 10px;
+    }
+    .hex-container {
+      width: 132px;
+      height: 114px;
+      position: relative;
+      margin-top: -28px;
+    }
+    .hex-container:nth-child(14n+8),
+    .hex-container:nth-child(14n+9),
+    .hex-container:nth-child(14n+10),
+    .hex-container:nth-child(14n+11),
+    .hex-container:nth-child(14n+12),
+    .hex-container:nth-child(14n+13),
+    .hex-container:nth-child(14n+14) {
+      transform: translateX(66px);
+    }
+    .hex {
+      width: 132px;
+      height: 114px;
+      background-color: #dfe6e9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: #2d3436;
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.3s ease;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+    .hex.interactive:hover {
+      background-color: #b2bec3;
+      transform: scale(1.05);
+    }
+    .hex-container:nth-child(-n+7),
+    .hex-container:nth-child(n+43):not(:nth-child(50)) {
+      pointer-events: none;
+    }
+    .hex-container:nth-child(8),
+    .hex-container:nth-child(15),
+    .hex-container:nth-child(22),
+    .hex-container:nth-child(29),
+    .hex-container:nth-child(36),
+    .hex-container:nth-child(14),
+    .hex-container:nth-child(21),
+    .hex-container:nth-child(28),
+    .hex-container:nth-child(35),
+    .hex-container:nth-child(42) {
+      pointer-events: none;
+    }
+    .hex-container:nth-child(7) .hex,
+    .hex-container:nth-child(49) .hex {
+      background-color: #dfe6e9;
+      display: none;
+    }
+    #resetBtn, #backBtn {
+      padding: 14px 28px;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    #resetBtn {
+      background-color: #CC2936;
+      color: white;
+    }
+    #resetBtn:hover {
+      background-color: #c0392b;
+      transform: translateY(-2px);
+    }
+    #backBtn {
+      background-color: #2ecc71;
+      color: white;
+    }
+    #backBtn:hover {
+      background-color: #27ae60;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="top-left">
+    <button id="backBtn" onclick="resetGame(); window.location.href='begin.html'"><i class="fas fa-arrow-left"></i> عودة</button>
+    <button id="resetBtn" onclick="resetGame()"><i class="fas fa-sync"></i> إعادة</button>
+  </div>
+  <h1>اضغط على أي حرف</h1>
+  <div id="lastTeam">آخر فريق جاوب: لا يوجد</div>
+  <div id="hexGrid"></div>
+
+  <script>
+    const totalLetters = 49;
+    const interactiveLettersCount = 25;
+    const allArabicLetters = [..."أبتثجحخدذرزسشصضطظعغفقكلمنهوي"];
+
+    const qaPairs = {
+  "أ": { question: "ما النظام الاقتصادي الذي يعتمد على الملكية الفردية؟", answer: "رأسمالية" },
+  "ب": { question: "ما الغزوة التي وقعت في السنة الثانية للهجرة وشهدت انتصار المسلمين على قريش؟", answer: "بدر" },
+  "ت": { question: "ما اسم العملية التي يتم فيها اشتقاق الكلمات من جذورها؟", answer: "التصريف" },
+  "ث": { question: "ما الحيوان الذي يُعرف بلقب 'أبو الحصين' ويُضرب به المثل في الذكاء؟", answer: "الثعلب" },
+  "ج": { question: "ما اسم الصحابي الذي اشتهر بروايته العديد من الأحاديث وارتبط بالنبي في غزواته؟", answer: "جابر بن عبد الله" },
+  "ح": { question: "ما الإجراء الذي يُستخدم لإدخال مادة طبية إلى جسم المريض باستخدام جهاز دقيق؟", answer: "حقن" },
+  "خ": { question: "ما اسم العصا المصنوعة من نبات البامبو وتستخدم في المشي أو العقاب؟", answer: "خيزران" },
+  "د": { question: "ما المصطلح الذي يُستخدم مجازًا للإشارة إلى الطريق الذي يسلكه الإنسان في حياته؟", answer: "درب" },
+  "ذ": { question: "ما المصطلح الذي يُستخدم للإشارة إلى أعلى نقطة أو قمة في أي شيء؟", answer: "ذروة" },
+  "ر": { question: "ما الكلمة التي تعبر عن الامتداد الجغرافي والاجتماعي الذي يرمز للحياة البسيطة والارتباط بالأرض؟", answer: "ريف" },
+  "ز": { question: "ما اسم الجزيرة التابعة لتنزانيا والتي تُشتهر بإنتاج التوابل؟", answer: "زنجبار" },
+  "س": { question: "ما المصطلح الذي يُعبر عن حالة الخمول الطويلة لبعض الحيوانات في فصل الشتاء؟", answer: "سبات" },
+  "ش": { question: "ما الحالة التي تحدث عند دخول الماء أو اللعاب في مجرى التنفس وتسبب السعال؟", answer: "شرقة" },
+  "ص": { question: "ما المصطلح الذي يُستخدم للإشارة إلى الجزء الأول أو البداية التي يبدأ منها كل شيء؟", answer: "صدر" },
+  "ض": { question: "ما الكلمة التي تُستخدم للإشارة إلى الإحساس العميق بالظلم والاضطهاد؟", answer: "ضيم" },
+  "ط": { question: "ما الكلمة التي تعبّر عن الحالة المزاجية التي يغمر فيها السامع بالسرور عند الاستماع للموسيقى؟", answer: "طرب" },
+  "ظ": { question: "ما الصلاة التي فُوجئ الصحابة بتحويل القبلة أثناء أدائها؟", answer: "صلاة الظهر" },
+  "ع": { question: "ما اسم المفهوم الذي يشير إلى التفكير المنطقي واستخدام العقل؟", answer: "عقلانية" },
+  "غ": { question: "ما المصطلح الطبي الذي يُستخدم لوصف انسداد الحلق بسبب جسم غريب؟", answer: "غصة" },
+  "ف": { question: "ما اسم الإمبراطورية القديمة المعروفة برحلاتها الاستكشافية؟", answer: "الفايكنج" },
+  "ق": { question: "ما يُطلق على الجماعة من الرجال؟", answer: "قوم" },
+  "ك": { question: "ما اسم النهر الذي يوجد في الجنة؟", answer: "نهر الكوثر" },
+  "ل": { question: "ما التصنيف النباتي الذي لا يحتوي على أنسجة متخصصة في النقل؟", answer: "لا وعائية" },
+  "م": { question: "من الآلات الحربية القديمة؟", answer: "منجنيق" },
+  "ن": { question: "الملك الجبار الذي زعم أنه يُحيي ويميت، فحاجّه النبي إبراهيم بالحجة والبرهان؟", answer: "النمرود" },
+  "ه": { question: "ما نوع الصورة التي تُنتج باستخدام تقنيات التصوير بالليزر؟", answer: "هولوغرام" },
+  "و": { question: "ما معنى النمارق؟", answer: "الوسائد" },
+  "ي": { question: "النبي الذي ابتلي بفقدان ابنه ثم عاد إليه؟", answer: "يعقوب عليه السلام" }
+};
+
+
+    function getHexColor(color) {
+      const colorMap = {
+        "red": "#CC2936",
+        "blue": "#0097e6",
+        "yellow": "#fbc531",
+        "green": "#4cd137",
+        "dark-gray": "#353b48",
+        "purple": "#8c7ae6",
+        "orange": "#e67e22",
+        "pink": "#FDA7DF"
+      };
+      return colorMap[color] || "#ccc";
+    }
+
+    function getRandomUniqueLetters(count) {
+      const shuffled = [...allArabicLetters].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
+
+    function loadOrCreateLetters() {
+      let savedLetters = localStorage.getItem("game_letters");
+      if (savedLetters) {
+        return JSON.parse(savedLetters);
+      } else {
+        const newLetters = getRandomUniqueLetters(interactiveLettersCount);
+        localStorage.setItem("game_letters", JSON.stringify(newLetters));
+        return newLetters;
+      }
+    }
+
+    function createHexGrid() {
+      const grid = document.getElementById("hexGrid");
+      grid.innerHTML = "";
+      const interactiveLetters = loadOrCreateLetters();
+      const team1Color = localStorage.getItem("team1Color") || "red";
+      const team2Color = localStorage.getItem("team2Color") || "blue";
+
+      for (let i = 0; i < totalLetters; i++) {
+        const container = document.createElement("div");
+        container.classList.add("hex-container");
+
+        const hex = document.createElement("div");
+        hex.classList.add("hex");
+
+        const row = Math.floor(i / 7) + 1;
+        const col = (i % 7) + 1;
+        const isInteractive = row >= 2 && row <= 6 && col >= 2 && col <= 6;
+
+        if (isInteractive) {
+          const interactiveIndex = (row - 2) * 5 + (col - 2);
+          const letter = interactiveLetters[interactiveIndex];
+          hex.textContent = letter;
+          hex.classList.add("interactive");
+
+          const team = localStorage.getItem(`letter_${letter}`);
+          if (team === team1Color) hex.style.backgroundColor = getHexColor(team1Color);
+          else if (team === team2Color) hex.style.backgroundColor = getHexColor(team2Color);
+
+          hex.addEventListener("click", () => {
+            const qa = qaPairs[letter] || { question: "لا يوجد سؤال.", answer: "..." };
+            window.location.href = `question.html?letter=${letter}&question=${encodeURIComponent(qa.question)}&answer=${encodeURIComponent(qa.answer)}&origin=index5.html`;
+          });
+        } else {
+          hex.textContent = "";
+          if (row === 1 || row === 7) hex.style.backgroundColor = getHexColor(team1Color);
+          if ([8, 15, 22, 29, 36, 14, 21, 28, 35, 42].includes(i + 1)) hex.style.backgroundColor = getHexColor(team2Color);
+        }
+
+        container.appendChild(hex);
+        grid.appendChild(container);
+      }
+    }
+
+    function displayLastTeam() {
+      const team1Name = localStorage.getItem("team1Name") || "الفريق الأول";
+      const team2Name = localStorage.getItem("team2Name") || "الفريق الثاني";
+      const team1Color = localStorage.getItem("team1Color") || "red";
+      const team2Color = localStorage.getItem("team2Color") || "blue";
+      const lastTeamKey = localStorage.getItem("last_team") || "لا يوجد";
+      const lastTeamDiv = document.getElementById("lastTeam");
+
+      let lastTeamText = "لا يوجد";
+      let bgColor = "#ccc";
+      let textColor = "#000";
+
+      if (lastTeamKey === team1Color) {
+        lastTeamText = team1Name;
+        bgColor = getHexColor(team1Color);
+        textColor = "#fff";
+      } else if (lastTeamKey === team2Color) {
+        lastTeamText = team2Name;
+        bgColor = getHexColor(team2Color);
+        textColor = "#fff";
+      }
+
+      lastTeamDiv.textContent = `آخر فريق جاوب: ${lastTeamText}`;
+      lastTeamDiv.style.backgroundColor = bgColor;
+      lastTeamDiv.style.color = textColor;
+      lastTeamDiv.style.borderColor = bgColor;
+    }
+
+    function resetGame() {
+      const team1Name = localStorage.getItem("team1Name");
+      const team1Color = localStorage.getItem("team1Color");
+      const team2Name = localStorage.getItem("team2Name");
+      const team2Color = localStorage.getItem("team2Color");
+
+      localStorage.clear();
+
+      localStorage.setItem("team1Name", team1Name);
+      localStorage.setItem("team1Color", team1Color);
+      localStorage.setItem("team2Name", team2Name);
+      localStorage.setItem("team2Color", team2Color);
+
+      location.reload();
+    }
+
+    displayLastTeam();
+    createHexGrid();
+  </script>
+</body>
+</html>
